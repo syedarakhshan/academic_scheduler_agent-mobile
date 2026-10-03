@@ -1,0 +1,70 @@
+name: timecade_mobile
+description: "Academic Scheduling Agent (TimeCade) - Teacher & Student mobile app"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+
+  # Networking
+  dio: ^5.4.0
+
+  # State management
+  provider: ^6.1.1
+
+  # Secure token storage (replaces localStorage from the web app)
+  flutter_secure_storage: ^9.0.0
+
+  # Dates
+  intl: ^0.19.0
+
+  # Icons (mirrors lucide-react used on the web app)
+  lucide_icons: ^0.257.0
+
+  # Export / share timetable as PDF
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  share_plus: ^7.2.1
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_native_splash: ^2.4.0      # <-- 1) YE ADD KARO
+
+flutter_native_splash:
+  color: "#EEF5FB"
+  image: assets/images/transparent.png
+  android_12:
+    color: "#EEF5FB"
+    image: assets/images/transparent.png
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/logo.png
+    - assets/images/transparent.png
+
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Light.ttf
+          weight: 300
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
