@@ -1,106 +1,147 @@
-# TimeCade Mobile — Step 1: Project Setup
+# Academic Scheduler Agent (TimeCade) — Mobile App
 
-Teacher + Student panels only, reusing your existing `juw-timetable` backend
-and PostgreSQL database as-is. No backend changes are required.
+A Flutter mobile app for the **Academic Scheduler Agent** timetable system. It gives **teachers** and **students** quick access to their weekly timetable, notifications and an AI scheduling assistant, and lets them export their timetable as a colorful PDF.
 
-## Why you need one local step first
+This is the mobile companion of the TimeCade web application and talks to the same backend API.
 
-Flutter's SDK isn't available in the environment I built this in, so I
-couldn't run `flutter create` myself. You'll need to generate the native
-Android/iOS project shell once, then drop these files in.
+---
 
-### 1. Generate the Flutter project shell
+## Features
 
-```bash
-flutter create timecade_mobile
+### Both roles
+- Login with **JUW ID + password**
+- Role-based home screen (Teacher or Student), restored automatically on app launch
+- Secure token storage (encrypted on-device)
+- Notifications with unread badge
+- Profile settings and **Change Password**
+- Logout with confirmation
+- Animated splash screen with the app logo
+- **Export timetable as PDF** (colored weekly grid + class list) and share it from the phone
+
+### Teacher
+- **Dashboard**
+- **My Schedule** with two views you can switch between:
+  - **List** — classes grouped day-wise, colored by subject
+  - **Grid** — day × time-slot grid where 3-hour labs span 3 columns
+- **Reschedule request** for any class (from the list or by tapping a class in the grid)
+- **AI Agent** — chat with the scheduling assistant
+
+### Student
+- **Dashboard**
+- **Timetable** — weekly grid with a color per subject
+- **My Courses**
+
+> Office-assistant accounts can sign in but are told this app only supports teachers and students.
+
+---
+
+## Tech stack
+
+| Area | Package |
+|---|---|
+| Framework | Flutter (Dart `>=3.0.0 <4.0.0`) |
+| State management | `provider` |
+| Networking | `dio` (JWT attached to every request, auto-logout on 401) |
+| Secure storage | `flutter_secure_storage` |
+| PDF export | `pdf`, `printing`, `share_plus`, `path_provider` |
+| Dates / icons | `intl`, `lucide_icons` |
+| Font | Plus Jakarta Sans |
+
+The backend is a separate service (Node.js / Express with a PostgreSQL database) that is shared with the web app.
+
+---
+
+## Project structure
+
+```
+lib/
+├── main.dart                  # App entry + role-based root router
+├── core/
+│   ├── api/                   # Dio client, token storage, API services
+│   ├── constants/             # app_config.dart (API base URL)
+│   ├── pdf/                   # Timetable PDF generation
+│   └── theme/                 # Navy/teal theme
+├── models/                    # AppUser, TimetableEntry, notifications, ...
+├── providers/                 # AuthProvider (login, logout, session restore)
+└── screens/
+    ├── auth/                  # Login
+    ├── common/                # Notifications sheet, profile settings
+    ├── student/               # Student shell, dashboard, timetable, courses
+    ├── teacher/               # Teacher shell, dashboard, schedule, AI agent
+    └── splash_screen.dart
+assets/
+├── fonts/                     # Plus Jakarta Sans
+└── images/                    # App logo
 ```
 
-This creates `android/`, `ios/`, `web/`, etc. — the platform boilerplate
-that's impractical to hand-write.
+---
 
-### 2. Copy these files in, overwriting the generated defaults
+## Getting started
 
-- `pubspec.yaml` → project root
-- `lib/` → replace the generated `lib/` folder entirely
+### Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install)
+- Android Studio (or VS Code) with an Android emulator or a physical Android phone
+- The TimeCade backend running or deployed, with at least one teacher or student account
 
-### 3. Install dependencies
+### 1. Clone and install
 
 ```bash
-cd timecade_mobile
+git clone https://github.com/syedarakhshan/academic_scheduler_agent-mobile.git
+cd academic_scheduler_agent-mobile
 flutter pub get
 ```
 
-### 4. Allow cleartext HTTP on Android (dev only)
+### 2. Point the app at your backend
 
-Your backend runs on plain `http://` on localhost. Android 9+ blocks
-cleartext traffic by default, so add a network security config:
+Open `lib/core/constants/app_config.dart` and set `apiBaseUrl` to your backend address.
 
-`android/app/src/main/res/xml/network_security_config.xml`:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">localhost</domain>
-    </domain-config>
-</network-security-config>
-```
+- **Deployed backend (HTTPS):** use the deployed URL. Nothing else is needed.
+- **Local backend on the Android emulator:** the emulator reaches your computer at `10.0.2.2`, not `localhost`.
+- **Local backend over plain `http://`:** Android 9+ blocks cleartext traffic by default. For development only, add a network security config:
 
-Then reference it in `android/app/src/main/AndroidManifest.xml`, inside
-the `<application>` tag:
-```xml
-<application
-    android:networkSecurityConfig="@xml/network_security_config"
-    ...>
-```
-(This is dev-only scaffolding — once the backend is deployed behind
-HTTPS, none of this is needed and you'd just update `AppConfig.apiBaseUrl`.)
+  `android/app/src/main/res/xml/network_security_config.xml`
 
-### 5. Start your backend
+  ```xml
+  <?xml version="1.0" encoding="utf-8"?>
+  <network-security-config>
+      <domain-config cleartextTrafficPermitted="true">
+          <domain includeSubdomains="true">10.0.2.2</domain>
+          <domain includeSubdomains="true">localhost</domain>
+      </domain-config>
+  </network-security-config>
+  ```
 
-```bash
-cd juw-timetable/backend
-npm run dev
-```
-It needs to be reachable at `http://localhost:5000` on your host machine
-(the app auto-translates this to `10.0.2.2` for the Android emulator —
-see `lib/core/constants/app_config.dart` for details, including the
-physical-device case).
+  Then reference it inside the `<application>` tag of `android/app/src/main/AndroidManifest.xml`:
 
-### 6. Run the app
+  ```xml
+  android:networkSecurityConfig="@xml/network_security_config"
+  ```
+
+### 3. Run
 
 ```bash
 flutter run
 ```
-Log in with any existing **teacher** or **student** account from your
-`users` table — office-assistant accounts will log in but are told
-this app doesn't support that role, matching the scope you asked for.
+
+Sign in with an existing teacher or student account from your database.
+
+### Build an APK
+
+```bash
+flutter build apk --release
+```
+
+The APK is created at `build/app/outputs/flutter-apk/app-release.apk`.
 
 ---
 
-## What's built in Step 1
+## Notes
 
-- Full project structure (`core/api`, `core/theme`, `models`, `providers`, `screens`)
-- `ApiClient` (Dio) — mirrors `utils/api.js`: base URL, 60s timeout, JWT
-  attached to every request, auto-logout on 401
-- `TokenStorage` — encrypted on-device storage, replacing `localStorage`
-- `AuthProvider` — mirrors `AuthContext.js`: `login()`, `logout()`,
-  `changePassword()`, session restore on launch
-- `AppUser` model — matches the exact `login`/`me` response shape
-- Login screen — same JUW ID + password flow
-- Role-based root router — Teacher/Student split like `App.js`'s
-  `ProtectedRoute` + `RoleRedirect`
-- Navy/teal theme matching the web app's branding
-- Bottom-nav shells for Teacher (Dashboard, Schedule, Batches, Rooms,
-  AI Agent) and Student (Dashboard, Timetable, My Courses) — **tab
-  bodies are placeholders**, built out in the next steps
+- Developed and tested on Android. The iOS, web, Windows, macOS and Linux folders are the default Flutter platform scaffolding.
+- Keep secrets (API keys, signing keystores, `key.properties`) out of the repository. They are already covered by `.gitignore`.
 
-## Next steps (once you confirm Step 1 runs and logs in correctly)
+---
 
-5. Teacher: Dashboard + My Schedule
-6. Teacher: Batch Timetable + Room Status
-7. Teacher: Reschedule request + approval status
-8. Teacher: AI Agent chat
-9. Student: Dashboard + Timetable
-10. Student: My Courses
-11. Polish (loading/error states, pull-to-refresh, PDF export)
+## Author
+
+**Rakhshan** — [@syedarakhshan](https://github.com/syedarakhshan)
